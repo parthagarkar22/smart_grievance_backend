@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -o errexit
 # Upgrade pip
 pip install --upgrade pip
 
