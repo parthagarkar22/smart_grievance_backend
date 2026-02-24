@@ -1,1 +1,1 @@
-web: gunicorn stenography_system.wsgi:application
+web: gunicorn config.wsgi:application
