@@ -11,7 +11,4 @@ urlpatterns = [
    path("api/notifications/", include("apps.notifications.urls")),
    
 
-
-
-
 ]

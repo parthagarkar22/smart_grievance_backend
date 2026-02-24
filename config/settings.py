@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_celery_beat',
     'rest_framework_simplejwt',
+    "corsheaders",
+
 
     # Local apps
     'apps.accounts.apps.AccountsConfig',
@@ -64,6 +66,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+     "corsheaders.middleware.CorsMiddleware",   # 👈 MUST be at top
+    "django.middleware.common.CommonMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -89,6 +93,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': os.getenv("DB_NAME", "smart_grievance"),
+        'USER': os.getenv("DB_USER", "postgres"),
+        'PASSWORD': os.getenv("DB_PASSWORD", "super123"),
+        'HOST': os.getenv("DB_HOST", "localhost"),
+        'PORT': os.getenv("DB_PORT", "5433"),
+    }
+}
+
 # =========================
 # DATABASE (PostgreSQL + PostGIS)
 # =========================
@@ -104,15 +122,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # }
 
 
-import dj_database_url
-import os
+# import dj_database_url
+# import os
 
-DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL", "postgresql://smart_grievance_db_user:c0YHEHCC0XURvpgtfHApqs859OnBvMMU@dpg-d6cllgq4d50c73a6s5t0-a.singapore-postgres.render.com/smart_grievance_db"),
-        engine="django.contrib.gis.db.backends.postgis"
-    )
-}
+# DATABASES = {
+#     "default": dj_database_url.parse(
+#         os.environ.get("DATABASE_URL", "postgresql://smart_grievance_db_user:c0YHEHCC0XURvpgtfHApqs859OnBvMMU@dpg-d6cllgq4d50c73a6s5t0-a.singapore-postgres.render.com/smart_grievance_db"),
+#         engine="django.contrib.gis.db.backends.postgis"
+#     )
+# }
 # =========================
 # AUTH USER MODEL
 # =========================
@@ -188,3 +206,9 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 #         'rest_framework.permissions.AllowAny',
 #     ),
 # }
+
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
