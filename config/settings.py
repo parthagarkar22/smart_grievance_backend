@@ -237,8 +237,8 @@ load_dotenv(BASE_DIR / ".env")
 # =========================
 # GDAL / GEOS (Windows GIS)
 # =========================
-# GDAL_LIBRARY_PATH = r"C:\Program Files\GDAL\gdal.dll"
-# GEOS_LIBRARY_PATH = r"C:\Program Files\GDAL\geos_c.dll"
+GDAL_LIBRARY_PATH = r"C:\Program Files\GDAL\gdal.dll"
+GEOS_LIBRARY_PATH = r"C:\Program Files\GDAL\geos_c.dll"
 
 # =========================
 # BASIC CONFIG
@@ -320,16 +320,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # =========================
 # DATABASE (Local PostgreSQL + PostGIS)
 # =========================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': os.getenv("DB_NAME", "smart_grievance"),
-        'USER': os.getenv("DB_USER", "postgres"),
-        'PASSWORD': os.getenv("DB_PASSWORD", "super123"),
-        'HOST': os.getenv("DB_HOST", "localhost"),
-        'PORT': os.getenv("DB_PORT", "5433"),
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': os.getenv("DB_NAME", "smart_grievance"),
+#         'USER': os.getenv("DB_USER", "postgres"),
+#         'PASSWORD': os.getenv("DB_PASSWORD", "super123"),
+#         'HOST': os.getenv("DB_HOST", "localhost"),
+#         'PORT': os.getenv("DB_PORT", "5433"),
+#     }
+# }
 
 # =========================
 # DATABASE (Render PostgreSQL + PostGIS)
@@ -348,17 +348,17 @@ DATABASES = {
 # =========================
 # DATABASE (Using dj_database_url)
 # =========================
-# import dj_database_url
-#
-# DATABASES = {
-#     "default": dj_database_url.parse(
-#         os.environ.get(
-#             "DATABASE_URL",
-#             "postgresql://smart_grievance_db_user:c0YHEHCC0XURvpgtfHApqs859OnBvMMU@dpg-d6cllgq4d50c73a6s5t0-a.singapore-postgres.render.com/smart_grievance_db"
-#         ),
-#         engine="django.contrib.gis.db.backends.postgis"
-#     )
-# }
+import dj_database_url
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        os.environ.get(
+            "DATABASE_URL",
+            "postgresql://smart_grievance_db_user:c0YHEHCC0XURvpgtfHApqs859OnBvMMU@dpg-d6cllgq4d50c73a6s5t0-a.singapore-postgres.render.com/smart_grievance_db"
+        ),
+        engine="django.contrib.gis.db.backends.postgis"
+    )
+}
 
 # =========================
 # AUTH USER MODEL
