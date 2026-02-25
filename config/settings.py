@@ -247,7 +247,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS =["smart-grievance-system-n2xn.onrender.com", "*"]
 
 # =========================
 # INSTALLED APPS
