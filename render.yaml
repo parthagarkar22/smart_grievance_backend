@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: smart-grievance-backend
+    env: python
+    buildCommand: |
+      apt-get update
+      apt-get install -y gdal-bin libgdal-dev binutils libproj-dev
+      pip install -r requirements.txt
+    startCommand: gunicorn config.wsgi:application
