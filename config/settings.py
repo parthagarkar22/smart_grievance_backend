@@ -348,7 +348,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # =========================
 # DATABASE (Using dj_database_url)
 # =========================
-# import dj_database_url
+import dj_database_url
 
 DATABASES = {
     "default": dj_database_url.parse(
