@@ -237,8 +237,8 @@ load_dotenv(BASE_DIR / ".env")
 # =========================
 # GDAL / GEOS (Windows GIS)
 # =========================
-GDAL_LIBRARY_PATH = r"C:\Program Files\GDAL\gdal.dll"
-GEOS_LIBRARY_PATH = r"C:\Program Files\GDAL\geos_c.dll"
+# GDAL_LIBRARY_PATH = r"C:\Program Files\GDAL\gdal.dll"
+# GEOS_LIBRARY_PATH = r"C:\Program Files\GDAL\geos_c.dll"
 
 # =========================
 # BASIC CONFIG
@@ -348,7 +348,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # =========================
 # DATABASE (Using dj_database_url)
 # =========================
-import dj_database_url
+# import dj_database_url
 
 DATABASES = {
     "default": dj_database_url.parse(
