@@ -121,3 +121,23 @@ class RefreshTokenView(APIView):
                 {"detail": str(e)},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+
+
+
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
+
+def create_admin(request):
+    User = get_user_model()
+
+    if User.objects.filter(username="admin").exists():
+        return JsonResponse({"message": "Admin already exists"})
+
+    User.objects.create_superuser(
+        username="admin",
+        email="admin@gmail.com",
+        password="admin123"
+    )
+
+    return JsonResponse({"message": "Superuser created successfully"})
