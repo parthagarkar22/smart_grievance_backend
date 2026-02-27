@@ -60,9 +60,20 @@ INSTALLED_APPS = [
 # =========================
 # MIDDLEWARE
 # =========================
+# MIDDLEWARE = [
+#     'django.middleware.security.SecurityMiddleware',
+#     "corsheaders.middleware.CorsMiddleware",   # MUST be near top
+#     'django.contrib.sessions.middleware.SessionMiddleware',
+#     'django.middleware.common.CommonMiddleware',
+#     'django.middleware.csrf.CsrfViewMiddleware',
+#     'django.contrib.auth.middleware.AuthenticationMiddleware',
+#     'django.contrib.messages.middleware.MessageMiddleware',
+#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+# ]
+
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # MUST BE FIRST
     'django.middleware.security.SecurityMiddleware',
-    "corsheaders.middleware.CorsMiddleware",   # MUST be near top
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -70,7 +81,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 ROOT_URLCONF = 'config.urls'
 
 # =========================
@@ -225,17 +235,25 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # ]
 
 
-# CORS_ALLOW_ALL_ORIGINS = True
+
 
 
 # CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173",
-#     "https://front-end-smart-grievance-system.vercel.app/",
+#     "https://front-end-smart-grievance-system-72x1z6tsl.vercel.app",
 # ]
 
+# CORS_ALLOW_ALL_ORIGINS = True
+
+# =========================
+# CORS SETTINGS (FINAL FIX)
+# =========================
 
 CORS_ALLOWED_ORIGINS = [
-    "https://front-end-smart-grievance-system-72x1z6tsl.vercel.app",
+    "https://front-end-smart-grievance-system.vercel.app",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [
+    "https://front-end-smart-grievance-system.vercel.app",
+]
+
+CORS_ALLOW_CREDENTIALS = True
