@@ -228,7 +228,14 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # CORS_ALLOW_ALL_ORIGINS = True
 
 
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",
+#     "https://front-end-smart-grievance-system.vercel.app/",
+# ]
+
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "https://front-end-smart-grievance-system.vercel.app/",
+    "https://front-end-smart-grievance-system-72x1z6tsl.vercel.app",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
