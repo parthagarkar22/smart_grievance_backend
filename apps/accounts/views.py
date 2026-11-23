@@ -40,6 +40,7 @@ class RegisterView(CreateAPIView):
                     "last_name":user.last_name,
                     "role": user.role,
                     "department": user.department,
+                    "email":user.email,
                 }
             },
             status=status.HTTP_201_CREATED

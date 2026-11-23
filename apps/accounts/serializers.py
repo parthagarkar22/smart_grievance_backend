@@ -2,14 +2,15 @@
 
 
 
-
 from rest_framework import serializers
 from .models import User
 import re
+from apps.grievances.tasks import send_grievance_email   # ✔ import email task
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(required=True)
 
     class Meta:
         model = User
@@ -19,6 +20,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'mobile',
+            "email",
         )
 
     def validate_mobile(self, value):
@@ -37,9 +39,27 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(
             username=validated_data['username'],
             password=validated_data['password'],
+            email=validated_data.get('email'),
             first_name=validated_data.get('first_name'),
             last_name=validated_data.get('last_name'),
             mobile=validated_data['mobile'],
             role='CITIZEN'
         )
+
+        # 🚀 Send Welcome Email Notification
+        send_grievance_email.delay(
+            subject="Welcome to Smart Grievance System",
+            message=f"""
+Hello {user.username},
+
+Your account has been successfully created in the Smart Grievance System.
+
+You can now submit and track complaints online.
+
+Thank you,
+Smart Grievance Team
+""",
+            recipient_list=[user.email],
+        )
+
         return user

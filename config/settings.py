@@ -2,7 +2,9 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+import sys
 from dotenv import load_dotenv
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -10,10 +12,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 # =========================
-# GDAL / GEOS (Windows GIS)
+# GDAL / GEOS
 # =========================
-# GDAL_LIBRARY_PATH = r"C:\Program Files\GDAL\gdal.dll"
-# GEOS_LIBRARY_PATH = r"C:\Program Files\GDAL\geos_c.dll"
+# Windows local: use Program Files paths if present.
+# Linux (Oracle/Render): set GDAL_LIBRARY_PATH / GEOS_LIBRARY_PATH in env, or leave unset.
+if sys.platform.startswith("win"):
+    GDAL_LIBRARY_PATH = os.getenv(
+        "GDAL_LIBRARY_PATH", r"C:\Program Files\GDAL\gdal.dll"
+    )
+    GEOS_LIBRARY_PATH = os.getenv(
+        "GEOS_LIBRARY_PATH", r"C:\Program Files\GDAL\geos_c.dll"
+    )
+else:
+    if os.getenv("GDAL_LIBRARY_PATH"):
+        GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
+    if os.getenv("GEOS_LIBRARY_PATH"):
+        GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
 
 # =========================
 # BASIC CONFIG
@@ -22,8 +36,13 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS =["smart-grievance-system-n2xn.onrender.com", "*"]
-# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if h.strip()
+]
+if "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("*")
 
 
 # =========================
@@ -60,20 +79,10 @@ INSTALLED_APPS = [
 # =========================
 # MIDDLEWARE
 # =========================
-# MIDDLEWARE = [
-#     'django.middleware.security.SecurityMiddleware',
-#     "corsheaders.middleware.CorsMiddleware",   # MUST be near top
-#     'django.contrib.sessions.middleware.SessionMiddleware',
-#     'django.middleware.common.CommonMiddleware',
-#     'django.middleware.csrf.CsrfViewMiddleware',
-#     'django.contrib.auth.middleware.AuthenticationMiddleware',
-#     'django.contrib.messages.middleware.MessageMiddleware',
-#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-# ]
-
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # MUST BE FIRST
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -105,47 +114,31 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # =========================
-# DATABASE (Local PostgreSQL + PostGIS)
+# DATABASE
+# Prefer DATABASE_URL (Supabase / cloud). Fall back to discrete DB_* vars (local).
 # =========================
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-#         'NAME': os.getenv("DB_NAME", "smart_grievance"),
-#         'USER': os.getenv("DB_USER", "postgres"),
-#         'PASSWORD': os.getenv("DB_PASSWORD", "super123"),
-#         'HOST': os.getenv("DB_HOST", "localhost"),
-#         'PORT': os.getenv("DB_PORT", "5433"),
-#     }
-# }
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# =========================
-# DATABASE (Render PostgreSQL + PostGIS)
-# =========================
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-#         'NAME': os.getenv("DB_NAME", "smart_grievance_db"),
-#         'USER': os.getenv("DB_USER", "smart_grievance_db_user"),
-#         'PASSWORD': os.getenv("DB_PASSWORD", "c0YHEHCC0XURvpgtfHApqs859OnBvMMU"),
-#         'HOST': os.getenv("DB_HOST", "dpg-d6cllgq4d50c73a6s5t0-a"),
-#         'PORT': os.getenv("DB_PORT", "5432"),
-#     }
-# }
-
-# =========================
-# DATABASE (Using dj_database_url)
-# =========================
-import dj_database_url
-
-DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ.get(
-            "DATABASE_URL",
-            "postgresql://smart_grievance_db_user:c0YHEHCC0XURvpgtfHApqs859OnBvMMU@dpg-d6cllgq4d50c73a6s5t0-a.singapore-postgres.render.com/smart_grievance_db"
-        ),
-        engine="django.contrib.gis.db.backends.postgis"
-    )
-}
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            engine="django.contrib.gis.db.backends.postgis",
+            conn_max_age=600,
+            ssl_require=os.getenv("DB_SSL_REQUIRE", "True") == "True",
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            'NAME': os.getenv("DB_NAME", "smart_grievance"),
+            'USER': os.getenv("DB_USER", "postgres"),
+            'PASSWORD': os.getenv("DB_PASSWORD", "super123"),
+            'HOST': os.getenv("DB_HOST", "localhost"),
+            'PORT': os.getenv("DB_PORT", "5433"),
+        }
+    }
 
 # =========================
 # AUTH USER MODEL
@@ -195,6 +188,7 @@ USE_TZ = True
 # =========================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -208,52 +202,51 @@ CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
+# Free-tier friendly: run tasks in-process when Redis/Celery worker is unavailable
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False") == "True"
+CELERY_TASK_EAGER_PROPAGATES = True
+
 # =========================
 # CELERY BEAT
 # =========================
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # =========================
-# EMAIL
+# CORS / CSRF
 # =========================
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-
-# =========================
-# OPTIONAL OPEN ACCESS MODE
-# =========================
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': (
-#         'rest_framework.permissions.AllowAny',
-#     ),
-# }
-
-# =========================
-# CORS
-# =========================
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173",
-# ]
-
-
-
-
-
-# CORS_ALLOWED_ORIGINS = [
-#     "https://front-end-smart-grievance-system-72x1z6tsl.vercel.app",
-# ]
-
-# CORS_ALLOW_ALL_ORIGINS = True
-
-# =========================
-# CORS SETTINGS (FINAL FIX)
-# =========================
-
-CORS_ALLOWED_ORIGINS = [
-    "https://front-end-smart-grievance-system.vercel.app",
+# Comma-separated origins, e.g.
+# FRONTEND_ORIGINS=http://localhost:5173,https://your-app.vercel.app
+_frontend_origins = [
+    o.strip()
+    for o in os.getenv(
+        "FRONTEND_ORIGINS",
+        "http://localhost:5173",
+    ).split(",")
+    if o.strip()
 ]
+
+CORS_ALLOWED_ORIGINS = _frontend_origins
+CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://front-end-smart-grievance-system.vercel.app",
+    o for o in _frontend_origins if o.startswith("https://") or o.startswith("http://")
 ]
 
-CORS_ALLOW_CREDENTIALS = True
+# Also trust the public backend URL if set (for admin / forms)
+_backend_public = os.getenv("BACKEND_PUBLIC_URL", "").strip()
+if _backend_public and _backend_public not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(_backend_public)
+
+# =========================
+# EMAIL
+# =========================
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "noreply@localhost")

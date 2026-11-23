@@ -1,4 +1,6 @@
 
+import os
+
 from django.contrib import admin
 from django.urls import path, include
 from apps.accounts.views import create_admin
@@ -18,7 +20,8 @@ urlpatterns = [
 ]
 
 
-if settings.DEBUG:
+# Serve media in DEBUG or when MEDIA_SERVE=True (simple free-VM setup without nginx)
+if settings.DEBUG or os.getenv("MEDIA_SERVE", "True") == "True":
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
