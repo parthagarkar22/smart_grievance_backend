@@ -106,29 +106,29 @@ def detect_priority(text: str) -> str:
 #     return hashlib.md5(image_file.read()).hexdigest()
 
 
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
-from geopy.distance import geodesic
+# Heavy AI deps are loaded lazily so migrate/collectstatic work on Render
+# without torch/clip/sentence-transformers installed at build time.
 
-# 🔥 TEXT EMBEDDING
-from sentence_transformers import SentenceTransformer
-
-# 🔥 IMAGE EMBEDDING
-import torch
-import clip
-from PIL import Image
+_text_model = None
+_clip_model = None
+_clip_preprocess = None
+_device = "cpu"
 
 
-# ======================================================
-# 🔧 LOAD MODELS (LOAD ONLY ONCE)
-# ======================================================
+def _get_text_model():
+    global _text_model
+    if _text_model is None:
+        from sentence_transformers import SentenceTransformer
+        _text_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _text_model
 
-# Text model
-text_model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Image model (CLIP)
-device = "cpu"
-clip_model, preprocess = clip.load("ViT-B/32", device=device)
+def _get_clip():
+    global _clip_model, _clip_preprocess
+    if _clip_model is None:
+        import clip
+        _clip_model, _clip_preprocess = clip.load("ViT-B/32", device=_device)
+    return _clip_model, _clip_preprocess
 
 
 # ======================================================
@@ -240,7 +240,7 @@ def get_text_embedding(text):
     """
     Convert text into vector embedding
     """
-    return text_model.encode(text).tolist()
+    return _get_text_model().encode(text).tolist()
 
 
 # ======================================================
@@ -251,7 +251,11 @@ def get_image_embedding(image_path):
     """
     Convert image into vector embedding
     """
-    image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+    import torch
+    from PIL import Image
+
+    clip_model, preprocess = _get_clip()
+    image = preprocess(Image.open(image_path)).unsqueeze(0).to(_device)
 
     with torch.no_grad():
         embedding = clip_model.encode_image(image)
@@ -267,6 +271,7 @@ def cosine_sim(vec1, vec2):
     """
     Calculate similarity between two vectors
     """
+    from sklearn.metrics.pairwise import cosine_similarity
     return cosine_similarity([vec1], [vec2])[0][0]
 
 
@@ -278,4 +283,5 @@ def get_distance(lat1, lon1, lat2, lon2):
     """
     Calculate distance between two geo points (in KM)
     """
+    from geopy.distance import geodesic
     return geodesic((lat1, lon1), (lat2, lon2)).km

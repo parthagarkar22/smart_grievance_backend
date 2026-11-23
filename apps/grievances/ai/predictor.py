@@ -277,13 +277,10 @@
 
 #     return detected_departments, 0.90
 
-from ultralytics import YOLO
 import os
 
-print("✅ YOLO Predictor module loaded")
-
 # -----------------------------------------------------
-# Load trained civic AI model
+# Load trained civic AI model (lazy — so migrate/boot works)
 # -----------------------------------------------------
 
 BASE_DIR = os.path.dirname(
@@ -296,17 +293,8 @@ BASE_DIR = os.path.dirname(
 
 MODEL_PATH = os.path.join(BASE_DIR, "ai_models", "civic_ai.pt")
 
-print("📦 Loading model from:", MODEL_PATH)
-
-model = YOLO(MODEL_PATH)
-
-# class names directly from the model
-CLASS_NAMES = model.names
-
-
-# -----------------------------------------------------
-# Map detected objects → Departments
-# -----------------------------------------------------
+_model = None
+CLASS_NAMES = {}
 
 OBJECT_DEPARTMENT_MAP = {
     "garbage": "garbage",
@@ -317,12 +305,24 @@ OBJECT_DEPARTMENT_MAP = {
 }
 
 
+def _get_model():
+    global _model, CLASS_NAMES
+    if _model is None:
+        from ultralytics import YOLO
+        print("📦 Loading model from:", MODEL_PATH)
+        _model = YOLO(MODEL_PATH)
+        CLASS_NAMES = _model.names
+        print("✅ YOLO Predictor module loaded")
+    return _model
+
+
 # -----------------------------------------------------
 # Prediction function
 # -----------------------------------------------------
 
 def predict_image(img_path):
 
+    model = _get_model()
     results = model(img_path)
 
     detected_departments = set()
