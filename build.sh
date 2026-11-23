@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 set -o errexit
-# Upgrade pip
+
 pip install --upgrade pip
 
-# Install dependencies
-pip install -r requirements.txt
+# Install Python deps without pinned GDAL first
+grep -v -i '^gdal==' requirements.txt > /tmp/requirements.nogdal.txt
+pip install -r /tmp/requirements.nogdal.txt
 
-# Collect static files
+# Bind GDAL Python package to the system GDAL version from Aptfile
+if command -v gdal-config >/dev/null 2>&1; then
+  GDAL_VER="$(gdal-config --version)"
+  pip install "gdal==${GDAL_VER}"
+else
+  echo "WARNING: gdal-config not found; GIS features may fail"
+fi
+
 python manage.py collectstatic --noinput
-
-# Run migrations
-python manage.py migrate
-
-# apt-get update
-# apt-get install -y gdal-bin libgdal-dev
+python manage.py migrate --noinput
