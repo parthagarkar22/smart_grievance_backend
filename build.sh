@@ -20,9 +20,8 @@ export C_INCLUDE_PATH="${C_INCLUDE_PATH}:/usr/include/gdal"
 echo "==> Upgrading pip"
 pip install --upgrade pip setuptools wheel
 
-echo "==> Installing Python requirements (without pinned GDAL)"
-grep -v -iE '^gdal==|^#.*GDAL' requirements.txt > /tmp/requirements.nogdal.txt
-pip install -r /tmp/requirements.nogdal.txt
+echo "==> Installing Python requirements"
+pip install -r requirements.txt
 
 echo "==> Installing Python GDAL bindings for system version"
 pip install "gdal==$(gdal-config --version)"
